@@ -1,33 +1,37 @@
-function parse(str) {
-    
+function parseNull (data) {
+  if (data.startsWith('null')) {
+    return [null, data.slice(4)]
+  }
 }
 
-//Null Parser
-function parseNull(data) {
-    if(data.startsWith('null'))
-        return [null, data.slice(4)];
+function parseBool (data) {
+  if (data.startsWith('true')) {
+    return [true, data.slice(4)]
+  } else if (data.startsWith('false')) {
+    return [false, data.slice(5)]
+  }
 }
 
-//Boolean Parser
-function parseBool(data) {
-    if(data.startsWith('true'))
-        return [true, data.slice(4)];
-    else if(data.startsWith('false'))
-        return [false, data.slice(5)];
+function parseNumber (data) {
+  let check = /[+-]?[0-9]*\.?[0-9]+(?:[Ee][+-]?[0-9]+)?/
+  let num = data.match(check)
+  if (num) {
+    return [Number(num[0]), data.slice(num[0].length)]
+  }
 }
 
-//Number Parser
-function parseNumber(data) {
-    var check = /[+-]?[0-9]*\.?[0-9]+(?:[Ee][+-]?[0-9]+)?/;
-    if(data.match(check)) {
-        var num = data.match(check);
-        return [Number(num[0]), data.slice(num[0].length)];
-    }    
+function parseString (data) {
+  if (data.startsWith('""')) {
+    return ['', data.slice(2)]
+  } else if (data.startsWith('"')) {
+    let check = /"((\\["\\/\\b\\f\\n\\r\\t\\u])*[^\u005C"]+)+((\\["\\/\\b\\f\\n\\r\\t\\u])*[^\u005C"]*)*"/
+    let num = data.match(check)
+    console.log(num)
+    if (num) {
+      return [String(num[0]), data.slice(num[0].length)]
+    }
+  }
 }
 
-//String Parser
-function parseString(data) {
+console.log(parseString('"\nmanchester\n\tunited\t"123456'))
 
-}
-
-console.log(parseNumber('+4.HelloThere'));
