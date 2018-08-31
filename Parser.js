@@ -27,7 +27,6 @@ function parseNumber (data) {
   }
 }
 // String parser
-// Rectify the \\\n issue
 function parseString (data) {
   if (data.startsWith('""')) {
     return ['', data.slice(2)]
@@ -47,9 +46,7 @@ function parseArray (data) {
   if (data.startsWith('[')) {
     data = parseWhiteSpace(data.slice(1))
     data = orchestrator(data)
-    console.log('data is ' + data + ' data[0] is ' + data[0] + ' data[1] is ' + data[1])
     a.push(data[0])
-    console.log('After push, array a is ' + a)
     while (data[1].indexOf(']') !== 0) {
       if (data[1].indexOf(',') === 0) {
         data = orchestrator(data[1])
@@ -57,12 +54,9 @@ function parseArray (data) {
       data = parseWhiteSpace(data[1])
       data = orchestrator(data)
       a.push(data[0])
-      console.log('After push, array a is ' + a)
     }
     data = data[1]
   }
-  // Check indirect recursion
-  console.log('before last square bracket ' + data)
   if (data.startsWith(']')) {
     return [a, data.slice(1)]
   }
@@ -87,6 +81,6 @@ function orchestrator (data) {
   let check = (parseArray(data) || parseNull(data) || parseBool(data) || parseComma(data) || parseNumber(data) || parseString(data))
   return check
 }
-console.log(orchestrator('[1,[2,3],"hellothere",5,6]hello'))
+console.log(orchestrator('[1,[2,3],"hellothere",5,6,"hello",null,true]hello'))
 
 
