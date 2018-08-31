@@ -42,22 +42,59 @@ function parseString (data) {
 }
 // Array parser
 function parseArray (data) {
-  var a = []
+  var b = []
   if (data.startsWith('[')) {
     data = parseWhiteSpace(data.slice(1))
+    if (data.startsWith(']')) {
+      return [b, data.slice(1)]
+    }
     data = orchestrator(data)
-    a.push(data[0])
+    b.push(data[0])
     while (data[1].indexOf(']') !== 0) {
       if (data[1].indexOf(',') === 0) {
         data = orchestrator(data[1])
       }
       data = parseWhiteSpace(data[1])
       data = orchestrator(data)
-      a.push(data[0])
+      b.push(data[0])
     }
     data = data[1]
   }
   if (data.startsWith(']')) {
+    return [b, data.slice(1)]
+  }
+}
+// Object parser
+function parseObject (data) {
+  var a = {}
+  if (data.startsWith('{')) {
+    data = parseWhiteSpace(data.slice(1))
+    if (data.startsWith('}')) {
+      return [a, data.slice(1)]
+    }
+    while (data.indexOf('}') !== 0) {
+      if (data.indexOf(',') === 0) {
+        data = orchestrator(data)
+        data = data[1]
+        data = parseWhiteSpace(data)
+      }
+      if (data.indexOf('\'') === 0) {
+        data = parseWhiteSpace(data.slice(1))
+      }
+      data = orchestrator(data)
+      a[data[0]] = null
+      let key = data[0]
+      if (data[1].indexOf('\'') === 0) {
+        data = parseWhiteSpace(data[1].slice(1))
+      }
+      data = orchestrator(data[1])
+      data = parseWhiteSpace(data[1])
+      data = orchestrator(data)
+      a[key] = data[0]
+      data = data[1]
+    }
+  }
+  if (data.startsWith('}')) {
     return [a, data.slice(1)]
   }
 }
@@ -76,11 +113,18 @@ function parseComma (data) {
     return [',', data.slice(1)]
   } else return null
 }
+// Colon parser
+function parseColon (data) {
+  if (data.startsWith(':')) {
+    return [':', data.slice(1)]
+  } else return null
+}
 // Orchestrator function
 function orchestrator (data) {
-  let check = (parseArray(data) || parseNull(data) || parseBool(data) || parseComma(data) || parseNumber(data) || parseString(data))
+  let check = (parseObject(data) || parseArray(data) || parseNull(data) || parseBool(data) || parseComma(data) || parseColon(data) || parseNumber(data) || parseString(data))
   return check
 }
-console.log(orchestrator('[1,[2,3],"hellothere",5,6,"hello",null,true]hello'))
+// console.log(orchestrator('{"first":{"second":[1,2,[1,4]]}}'))
+// console.log(JSON.stringify(orchestrator('{"first":{"second":[1,2,[1,4]]}}')))
 
 
