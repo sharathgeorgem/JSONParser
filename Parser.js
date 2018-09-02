@@ -17,7 +17,7 @@ function parseNumber (data) {
 }
 // String parser
 function parseString (data) {
-  let str = /^"([^"]*)"/.exec(data)
+  let str = /^"(([^"\\\u0000-\u001F])*((\\[\\"/bnrtf])*(\\\u[0-9A-Za-z]{4})*)*)*"/.exec(data)
   if (str) return [str[1], data.slice(str[0].length)]
   return null
 }
@@ -30,10 +30,31 @@ function parseArray (data) {
     data = parseWhiteSpace(data)
     data = parseValue(data)
     arr.push(data[0])
-    if (data[1].startsWith(',')) data = parseComma(data[1])
-    else data = data[1]
+    data = data[1]
+    if (data.startsWith(',')) data = parseSeparator(data)
   }
   return [arr, data.slice(1)]
+}
+// Object parser
+function parseObject (data) {
+  if (!data.startsWith('{')) return null
+  data = data.slice(1)
+  let obj = {}
+  while (!data.startsWith('}')) {
+    data = parseWhiteSpace(data)
+    if (data.startsWith(',')) return null
+    data = parseValue(data)
+    let key = data[0]
+    data = parseWhiteSpace(data[1])
+    if (data.startsWith(':')) data = parseSeparator(data)
+    data = parseWhiteSpace(data)
+    data = parseValue(data)
+    let value = data[0]
+    obj[key] = value
+    data = parseWhiteSpace(data[1])
+    if (data.startsWith(',')) data = parseSeparator(data)
+  }
+  return [obj, data.slice(1)]
 }
 // Whitespace parser
 function parseWhiteSpace (data) {
@@ -41,11 +62,9 @@ function parseWhiteSpace (data) {
   if (first === -1) return ''
   return data.slice(first)
 }
-// Comma parser
-function parseComma (data) { return data.slice(1) }
-// Colon parser
-function parseColon (data) { return data.slice(1) }
-// factoryParser
+// Separator parser
+function parseSeparator (data) { return data.slice(1) }
+// FactoryParser
 function factoryParser (...parsers) {
   return function (data) {
     for (let parser of parsers) {
@@ -56,52 +75,11 @@ function factoryParser (...parsers) {
     return null
   }
 }
-const parseValue = factoryParser(parseNull, parseBool, parseNumber, parseString, parseArray/*, parseObject */)
+// Value parser
+const parseValue = factoryParser(parseNull, parseBool, parseNumber, parseString, parseArray, parseObject)
 
-console.log(parseValue('  [       1, -0.651,3,"hel\\\nlo     ",4,5,     6, "hello", null, true, false]sup'))
-
-// Object parser
-/* function parseObject (data) {
-  var a = {}
-  if (data.startsWith('{')) {
-    data = parseWhiteSpace(data.slice(1))
-    if (data.startsWith('}')) {
-      return [a, data.slice(1)]
-    }
-    while (data.indexOf('}') !== 0) {
-      if (data.indexOf(',') === 0) {
-        data = orchestrator(data)
-        data = data[1]
-        data = parseWhiteSpace(data)
-      }
-      if (data.indexOf('\'') === 0) {
-        data = parseWhiteSpace(data.slice(1))
-      }
-      data = orchestrator(data)
-      a[data[0]] = null
-      let key = data[0]
-      if (data[1].indexOf('\'') === 0) {
-        data = parseWhiteSpace(data[1].slice(1))
-      }
-      data = orchestrator(data[1])
-      data = parseWhiteSpace(data[1])
-      data = orchestrator(data)
-      a[key] = data[0]
-      data = data[1]
-    }
-  }
-  if (data.startsWith('}')) {
-    return [a, data.slice(1)]
-  }
-} */
-// console.log(orchestrator('{"first":{"second":[1,2,[1,4]]}}'))
-// console.log(JSON.stringify(orchestrator('{"first":{"second":[1,2,[1,4]]}}')))
-/* const fs = require('fs')
+const fs = require('fs')
 fs.readFile('text.json', (err, data) => {
   if (err) throw err
-  console.log(JSON.stringify(orchestrator(data.toString())))
-}) */
-
-// console.log(orchestrator('"hello"'))
-
-
+  console.log(JSON.stringify(parseValue(data.toString())))
+})
