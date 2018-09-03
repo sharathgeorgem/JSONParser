@@ -31,7 +31,8 @@ function parseArray (data) {
     data = parseValue(data)
     arr.push(data[0])
     data = data[1]
-    if (data.startsWith(',')) data = parseSeparator(data)
+    if (data.startsWith(',')) data = data.slice(1)
+    data = parseWhiteSpace(data)
   }
   return [arr, data.slice(1)]
 }
@@ -46,13 +47,14 @@ function parseObject (data) {
     data = parseValue(data)
     let key = data[0]
     data = parseWhiteSpace(data[1])
-    if (data.startsWith(':')) data = parseSeparator(data)
+    if (data.startsWith(':')) data = data.slice(1)
     data = parseWhiteSpace(data)
     data = parseValue(data)
     let value = data[0]
     obj[key] = value
     data = parseWhiteSpace(data[1])
-    if (data.startsWith(',')) data = parseSeparator(data)
+    if (data.startsWith(',')) data = data.slice(1)
+    data = parseWhiteSpace(data)
   }
   return [obj, data.slice(1)]
 }
@@ -62,9 +64,7 @@ function parseWhiteSpace (data) {
   if (first === -1) return ''
   return data.slice(first)
 }
-// Separator parser
-function parseSeparator (data) { return data.slice(1) }
-// FactoryParser
+// factoryParser
 function factoryParser (...parsers) {
   return function (data) {
     for (let parser of parsers) {
@@ -75,16 +75,16 @@ function factoryParser (...parsers) {
     return null
   }
 }
-// Value parser
-const parseValue = factoryParser(parseNull, parseBool, parseNumber, parseString, parseArray, parseObject)
+const parseValue = factoryParser(parseNull, parseBool, parseNumber, parseString, parseObject, parseArray)
 // Main function
 function main (data) {
   let valid = parseValue(data)
   if (valid) return valid
   return 'Invalid JSON'
 }
+
 const fs = require('fs')
-fs.readFile('text.json', (err, data) => {
+fs.readFile('twitter.json', (err, data) => {
   if (err) throw err
   console.log(JSON.stringify(main(data.toString())))
 })
