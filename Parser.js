@@ -77,9 +77,14 @@ function factoryParser (...parsers) {
 }
 // Value parser
 const parseValue = factoryParser(parseNull, parseBool, parseNumber, parseString, parseArray, parseObject)
-
+// Main function
+function main (data) {
+  let valid = parseValue(data)
+  if (valid) return valid
+  return 'Invalid JSON'
+}
 const fs = require('fs')
 fs.readFile('text.json', (err, data) => {
   if (err) throw err
-  console.log(JSON.stringify(parseValue(data.toString())))
+  console.log(JSON.stringify(main(data.toString())))
 })
